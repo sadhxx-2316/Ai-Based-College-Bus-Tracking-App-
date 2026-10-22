@@ -223,6 +223,18 @@ export const StudentBusTrackingPage: React.FC = () => {
     return `${Math.round(straightDistanceMeters)} m`;
   }, [straightDistanceMeters]);
 
+  // Distance formula ETA fallback (calculates road-adjusted time using live bus speed or 25 km/h)
+  const fallbackEtaMinutes = useMemo(() => {
+    if (!straightDistanceMeters || !bus?.latest_location) return null;
+    const spd = bus.latest_location.speed_kmh && bus.latest_location.speed_kmh > 5
+      ? bus.latest_location.speed_kmh
+      : 25.0;
+    const speedMs = (spd * 1000) / 3600;
+    const roadDist = straightDistanceMeters * 1.25;
+    const secs = roadDist / speedMs;
+    return Math.max(1, Math.round(secs / 60));
+  }, [straightDistanceMeters, bus?.latest_location]);
+
   const servesStudentStop = useMemo(() => {
     if (!bus || (!user?.boarding_stop_id && !user?.boarding_stop_name)) return false;
     return bus.stops.some(
@@ -461,29 +473,35 @@ export const StudentBusTrackingPage: React.FC = () => {
             </div>
           </div>
           <div>
-            {loadingEta ? (
+            {loadingEta && !eta && !fallbackEtaMinutes ? (
               <div className="text-xs text-indigo-200 py-1 font-semibold">Calculating arrival time...</div>
             ) : !isLive ? (
               <div>
                 <div className="text-xl font-black text-white">Scheduled</div>
                 <div className="text-[11px] text-indigo-100 mt-1">Live ETA activates on start</div>
               </div>
-            ) : eta?.is_available ? (
+            ) : eta?.is_available || fallbackEtaMinutes !== null ? (
               <div>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl font-black text-white">{eta.eta_minutes}</span>
+                  <span className="text-3xl font-black text-white">
+                    {eta?.is_available ? eta.eta_minutes : fallbackEtaMinutes}
+                  </span>
                   <span className="text-xs font-semibold text-indigo-200">minutes</span>
                 </div>
-                {eta.estimated_arrival_time && (
+                {eta?.estimated_arrival_time ? (
                   <div className="text-[11px] text-indigo-100 mt-1">
                     Expected at {new Date(eta.estimated_arrival_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                ) : (
+                  <div className="text-[11px] text-indigo-100 mt-1">
+                    Estimated via distance formula
                   </div>
                 )}
               </div>
             ) : (
               <div>
                 <div className="text-lg font-bold text-white">En Route</div>
-                <div className="text-[11px] text-indigo-200 mt-1">{eta?.accuracy_note || 'Calculating road time...'}</div>
+                <div className="text-[11px] text-indigo-200 mt-1">{eta?.accuracy_note || 'Calculating arrival time...'}</div>
               </div>
             )}
           </div>

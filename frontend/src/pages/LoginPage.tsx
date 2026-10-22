@@ -219,20 +219,9 @@ export const LoginPage: React.FC = () => {
     setAuthMode('signin');
     setStatusMessage(null);
 
-    // Pre-fill email hints
-    if (role === 'bus_manager') {
-      setSignInEmail('manager@college.edu');
-      setSignInPassword('Manager@123');
-    } else if (role === 'driver') {
-      setSignInEmail('driver.kumar@college.edu');
-      setSignInPassword('Driver@123');
-    } else if (role === 'admin') {
-      setSignInEmail('admin@college.edu');
-      setSignInPassword('Admin@123');
-    } else {
-      setSignInEmail('student.ananya@college.edu');
-      setSignInPassword('Student@123');
-    }
+    // Leave sign-in text fields completely empty for all roles
+    setSignInEmail('');
+    setSignInPassword('');
   };
 
   const handleSignIn = async (e: React.FormEvent) => {

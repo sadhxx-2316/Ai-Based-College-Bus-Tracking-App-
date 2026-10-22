@@ -227,6 +227,7 @@ async def get_trip_eta_to_stop(
         route=route,
         live_location=live_loc,
         target_stop=target_stop,
-        all_stops=all_stops
+        all_stops=all_stops,
+        current_speed_kmh=float(live_loc.get("speed_kmh") or 25.0)
     )
     return eta_res
