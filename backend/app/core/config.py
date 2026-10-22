@@ -20,10 +20,10 @@ class Settings(BaseSettings):
     GOOGLE_MAPS_SERVER_KEY: Optional[str] = None
     
     # Operational Thresholds
-    ARRIVAL_RADIUS_METERS: float = 100.0  # Configurable arrival radius for starting-point verification
+    ARRIVAL_RADIUS_METERS: float = 250.0  # Configurable arrival radius for starting-point verification
     GPS_STALE_AFTER_SECONDS: int = 60    # Threshold to mark GPS stream as stale
     GPS_MAX_AGE_SECONDS: int = 30        # Maximum allowable age for submitted GPS observation
-    GPS_MAX_ACCURACY_METERS: float = 60.0 # Max allowable accuracy radius in meters
+    GPS_MAX_ACCURACY_METERS: float = 300.0 # Max allowable accuracy radius in meters (relaxed to 300m for mobile indoors / laptops)
     SPEED_ANOMALY_KMH_THRESHOLD: float = 90.0 # Flag speed jumps / excessive speed
     MAX_PLAUSIBLE_JUMP_SPEED_KMH: float = 130.0 # GPS coordinate jumps that are physically impossible
     

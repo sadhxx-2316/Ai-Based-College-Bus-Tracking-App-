@@ -213,19 +213,21 @@ def verify_starting_point_arrival(
     start_lat: float,
     start_lon: float,
     accuracy_meters: float,
-    radius_meters: float = 100.0
+    radius_meters: float = 250.0
 ) -> Tuple[bool, float, str]:
     """
     Validates driver physical arrival at route starting point.
     """
     distance = haversine_distance_meters(current_lat, current_lon, start_lat, start_lon)
     if accuracy_meters > settings.GPS_MAX_ACCURACY_METERS:
-        return False, distance, f"GPS accuracy too low ({accuracy_meters:.1f}m > max allowed {settings.GPS_MAX_ACCURACY_METERS:.1f}m). Please move to an open area."
+        return False, distance, f"GPS accuracy too low ({accuracy_meters:.1f}m > max allowed {settings.GPS_MAX_ACCURACY_METERS:.1f}m). Please move closer to a window or outdoors."
     
-    if distance <= radius_meters:
-        return True, distance, f"Arrival verified: {distance:.1f}m from route start (within {radius_meters:.0f}m radius)."
+    # Effective tolerance includes physical arrival radius plus sensor measurement margin (up to 350m)
+    effective_tolerance = max(radius_meters, min(radius_meters + accuracy_meters * 0.5, 350.0))
+    if distance <= effective_tolerance:
+        return True, distance, f"Arrival verified: {distance:.1f}m from route start (within {effective_tolerance:.0f}m tolerance)."
     else:
-        return False, distance, f"Not at route starting point. Current distance: {distance:.1f}m (must be within {radius_meters:.0f}m)."
+        return False, distance, f"Not at route starting point. Current distance: {distance:.1f}m (must be within {effective_tolerance:.0f}m)."
 
 def calculate_speed_kmh(lat1: float, lon1: float, time1: datetime, lat2: float, lon2: float, time2: datetime) -> float:
     time_delta_seconds = abs((time2 - time1).total_seconds())

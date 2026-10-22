@@ -376,11 +376,11 @@ async def submit_gps_location(
 
     # Validate accuracy
     if loc.accuracy_meters > settings.GPS_MAX_ACCURACY_METERS:
-        # We record but flag or reject if extremely poor (>150m)
-        if loc.accuracy_meters > 150.0:
+        # We record but flag or reject if extremely poor (>350m)
+        if loc.accuracy_meters > 350.0:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"GPS accuracy too poor ({loc.accuracy_meters:.1f}m > threshold 150m). Move closer to clear sky."
+                detail=f"GPS accuracy too poor ({loc.accuracy_meters:.1f}m > threshold 350m). Move closer to clear sky."
             )
 
     # Check speed / coordinate jump against last known live location

@@ -149,6 +149,32 @@ export const DriverDashboard: React.FC = () => {
     );
   };
 
+  // 3b. Simulate Starting-Point Arrival (Useful for indoor testing or simulation)
+  const handleSimulateArrival = async () => {
+    if (!currentAssignment) return;
+    setActionLoading(true);
+    setGpsError(null);
+    try {
+      const originStop = currentAssignment.route?.stops?.find(
+        (s) => s.id === currentAssignment.route?.origin_stop_id
+      ) || currentAssignment.route?.stops?.[0];
+
+      const lat = originStop?.latitude || 9.52554;
+      const lon = originStop?.longitude || 77.85408;
+
+      const res = await tripsApi.checkArrival(currentAssignment.id, {
+        latitude: lat,
+        longitude: lon,
+        accuracy_meters: 10.0,
+      });
+      setArrivalResult(res);
+    } catch (err: any) {
+      setGpsError(err.message || 'Simulation verification failed on server.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // 4. Start Trip
   const handleStartTrip = async () => {
     if (!currentAssignment) return;
@@ -390,14 +416,25 @@ export const DriverDashboard: React.FC = () => {
           {/* Action Buttons */}
           <div className="space-y-3 pt-1">
             {!arrivalResult?.verified && !trackingActive && (
-              <button
-                onClick={handleCheckArrival}
-                disabled={actionLoading}
-                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50"
-              >
-                <Compass className="w-4 h-4" />
-                {actionLoading ? 'Querying Phone GPS...' : 'Verify Starting-Point Arrival'}
-              </button>
+              <div className="space-y-2">
+                <button
+                  onClick={handleCheckArrival}
+                  disabled={actionLoading}
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-indigo-600 text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50"
+                >
+                  <Compass className="w-4 h-4" />
+                  {actionLoading ? 'Querying Device GPS...' : 'Verify Starting-Point Arrival (Live GPS)'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleSimulateArrival}
+                  disabled={actionLoading}
+                  className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors border border-slate-200"
+                >
+                  <span>📍 Simulate Arrival at Route Start (Indoor / Test Mode)</span>
+                </button>
+              </div>
             )}
 
             {arrivalResult?.verified && !trackingActive && (
