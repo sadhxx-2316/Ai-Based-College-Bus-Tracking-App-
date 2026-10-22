@@ -67,12 +67,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await authApi.register(params);
       // If student (active immediately), set token
-      if (res.user.account_status === 'active') {
+      if (res?.user?.account_status === 'active' && res?.access_token) {
         localStorage.setItem('token', res.access_token);
         setToken(res.access_token);
         setUser(res.user);
       }
-      return { user: res.user, message: res.message };
+      return { user: res?.user, message: res?.message };
     } catch (err: any) {
       setError(err.message || 'Registration failed');
       throw err;
