@@ -296,9 +296,10 @@ async def notify_students_telemetry_alert(
         ordered_stop_ids = route.get("ordered_stop_ids", []) if route else []
 
         all_students = await user_repo.list_users(role=UserRole.STUDENT)
+        # Target only students registered with a boarding stop on this route
         target_students = [
             s for s in all_students
-            if not s.get("boarding_stop_id") or s.get("boarding_stop_id") in ordered_stop_ids
+            if s.get("boarding_stop_id") in ordered_stop_ids or (s.get("boarding_stop_name") and route and any(st_id == s.get("boarding_stop_id") for st_id in ordered_stop_ids))
         ]
 
         now = datetime.now(timezone.utc)
@@ -468,34 +469,93 @@ async def submit_gps_location(
         trip_id=trip_id
     )
 
-    # Check proximity to stops for notifications
-    if route and route.get("ordered_stop_ids"):
-        stops_data = await stop_repo.get_by_ids(route["ordered_stop_ids"])
-        for s in stops_data:
-            dist_to_stop = haversine_distance_meters(loc.latitude, loc.longitude, s["latitude"], s["longitude"])
-            if dist_to_stop <= settings.APPROACHING_STOP_METERS:
-                # Approaching stop event
-                await ws_manager.broadcast_event(
-                    event_type="bus.approaching_stop",
-                    payload={
-                        "trip_id": trip_id,
-                        "stop_id": s["_id"],
-                        "stop_name": s["name"],
-                        "distance_meters": round(dist_to_stop, 1)
-                    },
-                    route_id=trip["route_id"]
-                )
-
-    # 4. Smart Telemetry Predictions & Student Notifications
+    # Initialize or fetch trip state tracking
     trip_state = _trip_telemetry_state.setdefault(trip_id, {
         "last_speed_alert_at": None,
         "last_traffic_alert_at": None,
         "stationary_since": None,
-        "stationary_alert_sent": False
+        "stationary_alert_sent": False,
+        "approached_stops": set(),
+        "arrived_stops": set(),
+        "departed_stops": set()
     })
 
     bus_num = bus["bus_number"] if bus else ""
     r_name = route["route_name"] if route else ""
+
+    # Check proximity to stops and notify ONLY the students registered for that stop
+    if route and route.get("ordered_stop_ids"):
+        stops_data = await stop_repo.get_by_ids(route["ordered_stop_ids"])
+        all_students = await user_repo.list_users(role=UserRole.STUDENT)
+        for s in stops_data:
+            dist_to_stop = haversine_distance_meters(loc.latitude, loc.longitude, s["latitude"], s["longitude"])
+
+            # Find students whose boarding stop matches this specific stop
+            stop_students = [
+                st for st in all_students
+                if st.get("boarding_stop_id") == s["_id"] or st.get("boarding_stop_name") == s["name"]
+            ]
+
+            # 1. Bus Nearing Stop Notification (within 500m)
+            if dist_to_stop <= settings.APPROACHING_STOP_METERS and s["_id"] not in trip_state["approached_stops"]:
+                trip_state["approached_stops"].add(s["_id"])
+                speed_est = effective_speed if effective_speed > 5.0 else 25.0
+                est_mins = max(1, int(round((dist_to_stop / (speed_est * 1000 / 3600)) / 60)))
+
+                for st in stop_students:
+                    notif = await notification_repo.create_notification(
+                        recipient_user_id=st["_id"],
+                        notification_type=NotificationType.BUS_APPROACHING,
+                        title="🚏 Bus Nearing Your Stop",
+                        message=f"Bus {bus_num} on {r_name} is nearing your stop ({s['name']}) ~{int(dist_to_stop)}m away. ETA: ~{est_mins} min(s). Please be ready!",
+                        related_entity_id=trip_id
+                    )
+                    await ws_manager.broadcast_event(
+                        event_type="notification.created",
+                        payload={
+                            "id": notif["_id"],
+                            "recipient_user_id": st["_id"],
+                            "title": notif["title"],
+                            "message": notif["message"],
+                            "notification_type": notif["notification_type"],
+                            "related_entity_id": trip_id,
+                            "is_read": False,
+                            "created_at": now.isoformat()
+                        },
+                        recipient_user_id=st["_id"]
+                    )
+
+            # 2. Bus Arrived at Stop (within 100m)
+            if dist_to_stop <= 100.0:
+                trip_state["arrived_stops"].add(s["_id"])
+
+            # 3. Bus Departed / Left Stop (past 150m after having arrived)
+            if s["_id"] in trip_state["arrived_stops"] and s["_id"] not in trip_state["departed_stops"] and dist_to_stop > 150.0:
+                trip_state["departed_stops"].add(s["_id"])
+                for st in stop_students:
+                    notif = await notification_repo.create_notification(
+                        recipient_user_id=st["_id"],
+                        notification_type=NotificationType.GENERAL,
+                        title="🚌 Bus Left Your Stop",
+                        message=f"Bus {bus_num} on {r_name} has departed from your stop ({s['name']}) and is continuing to the next destination.",
+                        related_entity_id=trip_id
+                    )
+                    await ws_manager.broadcast_event(
+                        event_type="notification.created",
+                        payload={
+                            "id": notif["_id"],
+                            "recipient_user_id": st["_id"],
+                            "title": notif["title"],
+                            "message": notif["message"],
+                            "notification_type": notif["notification_type"],
+                            "related_entity_id": trip_id,
+                            "is_read": False,
+                            "created_at": now.isoformat()
+                        },
+                        recipient_user_id=st["_id"]
+                    )
+
+    # 4. Smart Telemetry Predictions & Student Notifications
 
     # Check 1: Abnormal Speed (High Speed alert to students)
     if effective_speed > 60.0:

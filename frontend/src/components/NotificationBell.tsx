@@ -3,8 +3,10 @@ import { Bell, Check, Clock } from 'lucide-react';
 import { Notification } from '../types';
 import { authApi } from '../api/auth';
 import { useWebSocket } from '../context/WebSocketContext';
+import { useAuth } from '../context/AuthContext';
 
 export const NotificationBell: React.FC = () => {
+  const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -14,7 +16,12 @@ export const NotificationBell: React.FC = () => {
     try {
       setLoading(true);
       const data = await authApi.getNotifications();
-      setNotifications(data);
+      // Ensure only notifications for the current user are stored
+      if (user?.id) {
+        setNotifications(data.filter((n) => !n.recipient_user_id || n.recipient_user_id === user.id));
+      } else {
+        setNotifications(data);
+      }
     } catch (err) {
       console.warn('Failed to load notifications:', err);
     } finally {
@@ -27,13 +34,20 @@ export const NotificationBell: React.FC = () => {
 
     // Listen to real-time notification events
     const unsubscribe = addListener('notification.created', (newNotif: Notification) => {
-      setNotifications((prev) => [newNotif, ...prev]);
+      // Strictly filter to ensure notifications only display for their intended recipient
+      if (user?.id && newNotif.recipient_user_id && newNotif.recipient_user_id !== user.id) {
+        return;
+      }
+      setNotifications((prev) => {
+        if (prev.some((n) => n.id === newNotif.id)) return prev;
+        return [newNotif, ...prev];
+      });
     });
 
     return () => {
       unsubscribe();
     };
-  }, [addListener]);
+  }, [addListener, user?.id]);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 

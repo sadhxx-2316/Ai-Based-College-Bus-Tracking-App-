@@ -115,12 +115,27 @@ async def approve_driver_application(
     })
 
     # Create persistent notification for the approved driver
-    await notification_repo.create_notification(
+    d_notif = await notification_repo.create_notification(
         recipient_user_id=app["user_id"],
         notification_type=NotificationType.GENERAL,
-        title="Driver Application Approved",
-        message="Congratulations! Your driver application has been reviewed and approved by the college transport manager.",
+        title="✅ Driver Application Approved",
+        message="Congratulations! Your driver application has been reviewed and approved by the College Transport Manager. You can now log in and take scheduled duty trips.",
         related_entity_id=app_id
+    )
+
+    await ws_manager.broadcast_event(
+        event_type="notification.created",
+        payload={
+            "id": d_notif["_id"],
+            "recipient_user_id": app["user_id"],
+            "title": d_notif["title"],
+            "message": d_notif["message"],
+            "notification_type": d_notif["notification_type"],
+            "related_entity_id": app_id,
+            "is_read": False,
+            "created_at": d_notif["created_at"].isoformat()
+        },
+        recipient_user_id=app["user_id"]
     )
 
     await ws_manager.broadcast_event(

@@ -64,24 +64,40 @@ class ConnectionManager:
                 logger.warning(f"Error sending message to websocket subscriber: {e}")
                 self.disconnect(ws)
 
-    async def broadcast_event(self, event_type: str, payload: Dict[str, Any], route_id: Optional[str] = None, trip_id: Optional[str] = None, recipient_user_id: Optional[str] = None):
+    async def broadcast_event(
+        self,
+        event_type: str,
+        payload: Dict[str, Any],
+        route_id: Optional[str] = None,
+        trip_id: Optional[str] = None,
+        recipient_user_id: Optional[str] = None,
+        manager_only: bool = False
+    ):
         """
-        Dispatches real-time events to all relevant channels:
-        - Manager fleet channel
-        - Specific user channel (if targeted)
-        - Route channel (for subscribed students)
-        - Trip channel (for live tracker)
+        Dispatches real-time events strictly to authorized, isolated channels:
+        - Targeted private user events (recipient_user_id): ONLY sent to user:{recipient_user_id}.
+        - Manager events (manager_only or non-student fleet updates): sent to manager channel.
+        - Route & Trip events: sent to subscribed route and trip rooms.
         """
-        # Always broadcast to manager channel
-        await self.broadcast_to_channel("manager", event_type, payload)
-
+        # 1. Private User Targeted Delivery (never leak to other users or manager channel)
         if recipient_user_id:
             await self.broadcast_to_channel(f"user:{recipient_user_id}", event_type, payload)
+            return
 
+        # 2. Manager-Only Delivery
+        if manager_only:
+            await self.broadcast_to_channel("manager", event_type, payload)
+            return
+
+        # 3. Route & Trip Channels
         if route_id:
             await self.broadcast_to_channel(f"route:{route_id}", event_type, payload)
 
         if trip_id:
             await self.broadcast_to_channel(f"trip:{trip_id}", event_type, payload)
+
+        # 4. Fleet updates for managers (exclude student-targeted alerts)
+        if not event_type.startswith("student.") and not event_type.startswith("bus.approaching") and not event_type.startswith("bus.departed"):
+            await self.broadcast_to_channel("manager", event_type, payload)
 
 ws_manager = ConnectionManager()

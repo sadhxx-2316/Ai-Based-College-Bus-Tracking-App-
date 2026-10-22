@@ -130,15 +130,30 @@ async def create_assignment(
     )
 
     # 7. Create persistent in-app notification for the driver
-    await notification_repo.create_notification(
+    driver_notif = await notification_repo.create_notification(
         recipient_user_id=assign_in.driver_id,
         notification_type=NotificationType.ASSIGNMENT_CREATED,
-        title="New Bus Assignment",
+        title="📋 New Bus Assignment",
         message=f"You have been assigned Bus {bus['bus_number']} for route '{route['route_name']}' on {assign_in.service_date} at {assign_in.scheduled_departure}.",
         related_entity_id=assignment["_id"]
     )
 
-    # 8. Broadcast real-time event to driver and manager
+    # 8. Broadcast real-time event directly to driver
+    await ws_manager.broadcast_event(
+        event_type="notification.created",
+        payload={
+            "id": driver_notif["_id"],
+            "recipient_user_id": assign_in.driver_id,
+            "title": driver_notif["title"],
+            "message": driver_notif["message"],
+            "notification_type": driver_notif["notification_type"],
+            "related_entity_id": assignment["_id"],
+            "is_read": False,
+            "created_at": driver_notif["created_at"].isoformat()
+        },
+        recipient_user_id=assign_in.driver_id
+    )
+
     await ws_manager.broadcast_event(
         event_type="assignment.created",
         payload={
@@ -202,13 +217,44 @@ async def accept_assignment(
         status=AssignmentStatus.ACCEPTED
     )
 
+    bus_doc = await bus_repo.get_by_id(assignment["bus_id"])
+    bus_num = bus_doc["bus_number"] if bus_doc else "Bus"
+    route_doc = await route_repo.get_by_id(assignment["route_id"])
+    r_name = route_doc["route_name"] if route_doc else "Assigned Route"
+
+    # Notify all Transport Managers
+    managers = await user_repo.list_users(role=UserRole.BUS_MANAGER)
+    for mgr in managers:
+        m_notif = await notification_repo.create_notification(
+            recipient_user_id=mgr["_id"],
+            notification_type=NotificationType.GENERAL,
+            title="✅ Driver Accepted Assignment",
+            message=f"Driver {current_user['name']} has accepted the trip assignment for {bus_num} on '{r_name}'.",
+            related_entity_id=assignment_id
+        )
+        await ws_manager.broadcast_event(
+            event_type="notification.created",
+            payload={
+                "id": m_notif["_id"],
+                "recipient_user_id": mgr["_id"],
+                "title": m_notif["title"],
+                "message": m_notif["message"],
+                "notification_type": m_notif["notification_type"],
+                "related_entity_id": assignment_id,
+                "is_read": False,
+                "created_at": m_notif["created_at"].isoformat()
+            },
+            recipient_user_id=mgr["_id"]
+        )
+
     await ws_manager.broadcast_event(
         event_type="assignment.accepted",
         payload={
             "assignment_id": assignment_id,
             "driver_name": current_user["name"],
             "driver_id": current_user["_id"]
-        }
+        },
+        manager_only=True
     )
 
     await audit_repo.log_action(
@@ -246,6 +292,36 @@ async def reject_assignment(
         cancellation_reason=req.reason
     )
 
+    bus_doc = await bus_repo.get_by_id(assignment["bus_id"])
+    bus_num = bus_doc["bus_number"] if bus_doc else "Bus"
+    route_doc = await route_repo.get_by_id(assignment["route_id"])
+    r_name = route_doc["route_name"] if route_doc else "Assigned Route"
+
+    # Notify all Transport Managers
+    managers = await user_repo.list_users(role=UserRole.BUS_MANAGER)
+    for mgr in managers:
+        m_notif = await notification_repo.create_notification(
+            recipient_user_id=mgr["_id"],
+            notification_type=NotificationType.GENERAL,
+            title="❌ Driver Declined Assignment",
+            message=f"Driver {current_user['name']} declined assignment for {bus_num} on '{r_name}'. Reason: {req.reason or 'Not specified'}.",
+            related_entity_id=assignment_id
+        )
+        await ws_manager.broadcast_event(
+            event_type="notification.created",
+            payload={
+                "id": m_notif["_id"],
+                "recipient_user_id": mgr["_id"],
+                "title": m_notif["title"],
+                "message": m_notif["message"],
+                "notification_type": m_notif["notification_type"],
+                "related_entity_id": assignment_id,
+                "is_read": False,
+                "created_at": m_notif["created_at"].isoformat()
+            },
+            recipient_user_id=mgr["_id"]
+        )
+
     await ws_manager.broadcast_event(
         event_type="assignment.rejected",
         payload={
@@ -253,7 +329,8 @@ async def reject_assignment(
             "driver_name": current_user["name"],
             "driver_id": current_user["_id"],
             "reason": req.reason
-        }
+        },
+        manager_only=True
     )
 
     await audit_repo.log_action(

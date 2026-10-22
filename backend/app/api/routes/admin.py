@@ -59,11 +59,25 @@ async def approve_manager(
     )
 
     # Persistent notification to Manager
-    await notification_repo.create_notification(
+    mgr_notif = await notification_repo.create_notification(
         recipient_user_id=manager_id,
         notification_type=NotificationType.GENERAL,
         title="Manager Account Approved",
         message="Your Transport Manager account has been verified and approved by the System Administrator. You can now access full fleet operations."
+    )
+
+    await ws_manager.broadcast_event(
+        event_type="notification.created",
+        payload={
+            "id": mgr_notif["_id"],
+            "recipient_user_id": manager_id,
+            "title": mgr_notif["title"],
+            "message": mgr_notif["message"],
+            "notification_type": mgr_notif["notification_type"],
+            "is_read": False,
+            "created_at": mgr_notif["created_at"].isoformat()
+        },
+        recipient_user_id=manager_id
     )
 
     await ws_manager.broadcast_event(
