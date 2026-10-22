@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { useAuth } from './AuthContext';
+import { getApiBaseUrl } from '../api/client';
 
 export type ConnectionStatus = 'connected' | 'connecting' | 'reconnecting' | 'disconnected';
 
@@ -62,9 +63,9 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const host = window.location.host;
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Use relative path if proxied, or point to backend
-    const wsUrl = import.meta.env.VITE_API_BASE_URL
-      ? `${import.meta.env.VITE_API_BASE_URL.replace(/^http/, 'ws')}/ws?token=${token}`
+    const base = getApiBaseUrl();
+    const wsUrl = base
+      ? `${base.replace(/^http/, 'ws')}/ws?token=${token}`
       : `${protocol}//${host}/ws?token=${token}`;
 
     setStatus('connecting');
