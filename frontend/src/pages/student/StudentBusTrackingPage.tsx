@@ -545,14 +545,14 @@ export const StudentBusTrackingPage: React.FC = () => {
                 Live 3D Vehicle Map
               </span>
               <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-3.5 h-1.5 bg-indigo-600 rounded-full" /> Road Corridor
+                <span className="flex items-center gap-1.5 font-bold text-blue-600">
+                  <span className="w-4 h-1.5 bg-blue-600 rounded-full shadow-xs" /> Blue Road Path (Start → End)
                 </span>
                 <span className="flex items-center gap-1.5">
                   <span className="w-3.5 h-0.5 border-t-2 border-dashed border-amber-500" /> Approach Vector
                 </span>
                 <span className="flex items-center gap-1.5 font-bold text-amber-600">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-600" /> 3D Live Bus
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-600 animate-pulse" /> Live College Bus
                 </span>
               </div>
             </div>

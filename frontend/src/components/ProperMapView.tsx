@@ -175,93 +175,103 @@ function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number
   return (brng + 360) % 360;
 }
 
-// 3D Isometric Bus HTML generator with headlights, reflections, and HUD
-function build3DBusHtml(busNumber: string, speed: number, isStale: boolean, heading: number): string {
+// Small College Bus SVG with realistic details (headlights, tires, rooftop AC, windshield, reflections, tail lights, and floating speed HUD)
+function buildSmallBusSvg(busNumber: string, speed: number, isStale: boolean, heading: number): string {
   const speedLabel = speed > 0 ? `${speed.toFixed(1)} km/h` : 'Stationary';
   const isMoving = speed > 2;
 
   return `
-    <div class="relative flex flex-col items-center select-none group cursor-pointer" style="perspective: 1000px;">
-      <!-- Floating 3D Holographic HUD Badge -->
-      <div class="mb-2 px-3 py-1 bg-slate-900/95 text-white text-[11px] font-bold rounded-full shadow-2xl border border-indigo-400/50 backdrop-blur-md flex items-center gap-1.5 whitespace-nowrap transform -translate-y-1 group-hover:scale-105 transition-all">
+    <div class="relative flex flex-col items-center select-none group cursor-pointer" style="perspective: 1000px; transform: translate3d(0,0,0);">
+      <!-- Floating Holographic HUD Badge -->
+      <div class="mb-2 px-2.5 py-1 bg-slate-900/95 text-white text-[11px] font-bold rounded-full shadow-2xl border border-blue-400/60 backdrop-blur-md flex items-center gap-1.5 whitespace-nowrap transform -translate-y-1 group-hover:scale-105 transition-all">
         <span class="w-2.5 h-2.5 rounded-full ${isStale ? 'bg-amber-400' : 'bg-emerald-400'} ${isMoving ? 'animate-ping' : ''} shrink-0"></span>
         <span class="tracking-wide text-white font-extrabold">BUS ${busNumber}</span>
-        <span class="${isMoving ? 'bg-emerald-600' : 'bg-indigo-600'} text-white px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold shadow-xs">
+        <span class="${isMoving ? 'bg-emerald-600' : 'bg-blue-600'} text-white px-2 py-0.5 rounded-full text-[10px] font-mono font-bold shadow-xs">
           ⚡ ${speedLabel}
         </span>
       </div>
 
-      <!-- 3D Rotatable Bus Vehicle (Oriented to Road Heading) -->
-      <div class="relative transition-transform duration-700 ease-out" style="transform: rotate(${heading}deg);">
-        <!-- Real-time Headlight Road Illumination Beam -->
-        <div class="absolute -top-14 left-1/2 -translate-x-1/2 w-16 h-18 pointer-events-none opacity-80"
-             style="background: radial-gradient(ellipse at bottom, rgba(254, 240, 138, 0.7) 0%, rgba(254, 240, 138, 0.1) 60%, rgba(254, 240, 138, 0) 80%); filter: blur(2px);">
+      <!-- Small Bus Vehicle Oriented to Road Heading -->
+      <div class="relative transition-transform duration-500 ease-out" style="transform: rotate(${heading}deg); transform-origin: 50% 50%;">
+        <!-- Real-time Headlight Road Illumination Beam (shining onto the blue road path) -->
+        <div class="absolute -top-16 left-1/2 -translate-x-1/2 w-20 h-20 pointer-events-none opacity-85"
+             style="background: radial-gradient(ellipse at bottom, rgba(254, 240, 138, 0.75) 0%, rgba(254, 240, 138, 0.2) 55%, rgba(254, 240, 138, 0) 80%); filter: blur(2px);">
         </div>
 
-        <!-- 3D Ground Shadow beneath Chassis -->
-        <div class="absolute inset-0 bg-black/50 rounded-2xl blur-xs translate-y-2 scale-95 pointer-events-none"></div>
+        <!-- Realistic SVG Small College Bus -->
+        <svg width="44" height="74" viewBox="0 0 44 74" fill="none" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-2xl">
+          <!-- Drop Shadow underneath chassis -->
+          <ellipse cx="22" cy="40" rx="18" ry="32" fill="rgba(0,0,0,0.4)" />
 
-        <!-- Realistic 3D College Bus Body Shell -->
-        <div class="relative w-12 h-22 bg-linear-to-b from-amber-400 via-amber-500 to-amber-600 rounded-xl shadow-2xl border-2 border-amber-300 flex flex-col justify-between overflow-hidden"
-             style="box-shadow: 0 12px 25px -4px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.7), inset 0 -4px 8px rgba(0, 0, 0, 0.35);">
+          <!-- 4 Rubber Tires on left & right -->
+          <!-- Front Left Tire -->
+          <rect x="0" y="14" width="4" height="11" rx="2" fill="#0f172a" stroke="#334155" stroke-width="0.8" />
+          <!-- Front Right Tire -->
+          <rect x="40" y="14" width="4" height="11" rx="2" fill="#0f172a" stroke="#334155" stroke-width="0.8" />
+          <!-- Rear Left Tire -->
+          <rect x="0" y="50" width="4" height="11" rx="2" fill="#0f172a" stroke="#334155" stroke-width="0.8" />
+          <!-- Rear Right Tire -->
+          <rect x="40" y="50" width="4" height="11" rx="2" fill="#0f172a" stroke="#334155" stroke-width="0.8" />
 
-          <!-- Front Hood, Windshield & LED Headlights -->
-          <div class="relative w-full h-7 bg-linear-to-b from-slate-900 to-sky-950 rounded-t-lg border-b border-amber-600/60 flex flex-col justify-between p-1 overflow-hidden">
-            <!-- Windshield Glass Reflection Glare -->
-            <div class="absolute inset-0 bg-linear-to-tr from-transparent via-sky-300/35 to-white/50 pointer-events-none"></div>
-            <!-- Dual Projector LED Headlights -->
-            <div class="flex items-center justify-between px-0.5 z-10">
-              <div class="w-2.5 h-1.5 bg-yellow-100 rounded-xs shadow-[0_0_10px_#fde047] border border-white"></div>
-              <div class="w-4 h-1 bg-slate-800 rounded-xs flex items-center justify-center">
-                <span class="w-2 h-0.5 bg-amber-400 rounded-full"></span>
-              </div>
-              <div class="w-2.5 h-1.5 bg-yellow-100 rounded-xs shadow-[0_0_10px_#fde047] border border-white"></div>
-            </div>
-            <!-- Driver Cockpit Silhouette -->
-            <div class="flex items-center justify-center z-10 opacity-80">
-              <div class="w-3.5 h-2 bg-slate-800 rounded-t-xs"></div>
-            </div>
-          </div>
+          <!-- Main Bus Body Chassis (Vibrant College Yellow) -->
+          <rect x="3" y="6" width="38" height="62" rx="7" fill="url(#bus_yellow_gradient)" stroke="#d97706" stroke-width="1.2" />
 
-          <!-- Mid Roof with Dual AC Compressor & Passenger Windows -->
-          <div class="relative flex-1 bg-amber-400 flex flex-col items-center justify-center py-1">
-            <!-- 3D Rooftop AC Unit -->
-            <div class="w-7 h-5 bg-linear-to-b from-slate-100 to-slate-300 rounded-xs shadow-md border border-slate-400 flex items-center justify-center">
-              <div class="w-5 h-3 bg-slate-400/50 rounded-2xs grid grid-cols-2 gap-0.5 p-0.5">
-                <div class="bg-slate-700/60 rounded-2xs"></div>
-                <div class="bg-slate-700/60 rounded-2xs"></div>
-              </div>
-            </div>
-            <!-- Side Windows (Left & Right) -->
-            <div class="absolute left-0 top-1 bottom-1 w-1 bg-slate-900/90 flex flex-col justify-around py-0.5">
-              <div class="h-1.5 bg-sky-200/50 rounded-r-2xs"></div>
-              <div class="h-1.5 bg-sky-200/50 rounded-r-2xs"></div>
-              <div class="h-1.5 bg-sky-200/50 rounded-r-2xs"></div>
-            </div>
-            <div class="absolute right-0 top-1 bottom-1 w-1 bg-slate-900/90 flex flex-col justify-around py-0.5">
-              <div class="h-1.5 bg-sky-200/50 rounded-l-2xs"></div>
-              <div class="h-1.5 bg-sky-200/50 rounded-l-2xs"></div>
-              <div class="h-1.5 bg-sky-200/50 rounded-l-2xs"></div>
-            </div>
-          </div>
+          <!-- Front Bumper & Grill -->
+          <rect x="8" y="5" width="28" height="3" rx="1.5" fill="#334155" />
+          <!-- Dual LED Projector Headlights -->
+          <rect x="6" y="7" width="5" height="3" rx="1" fill="#fef08a" stroke="#ffffff" stroke-width="0.6" />
+          <rect x="33" y="7" width="5" height="3" rx="1" fill="#fef08a" stroke="#ffffff" stroke-width="0.6" />
 
-          <!-- Rear Bumper with Ruby-Red LED Tail Lights -->
-          <div class="relative w-full h-3.5 bg-linear-to-t from-slate-950 to-amber-700 flex items-center justify-between px-1 border-t border-amber-600/70">
-            <div class="w-2.5 h-1.5 bg-rose-600 rounded-xs shadow-[0_0_8px_#f43f5e] border border-rose-300"></div>
-            <div class="text-[7.5px] text-amber-200 font-extrabold tracking-tighter opacity-90">COLLEGE</div>
-            <div class="w-2.5 h-1.5 bg-rose-600 rounded-xs shadow-[0_0_8px_#f43f5e] border border-rose-300"></div>
-          </div>
-        </div>
+          <!-- Front Curved Windshield (Deep Blue-Black with sky reflection) -->
+          <path d="M 6 12 Q 22 9 38 12 L 37 22 Q 22 20 7 22 Z" fill="#0f172a" stroke="#1e293b" stroke-width="0.8" />
+          <!-- Windshield Glare Reflection -->
+          <path d="M 9 13 Q 22 11 35 13 L 34 16 Q 22 14 10 16 Z" fill="rgba(125, 211, 252, 0.55)" />
 
-        <!-- 4 3D Rubber Wheels on Left and Right -->
-        <div class="absolute -left-1 top-3.5 w-1.5 h-3.5 bg-slate-900 rounded-xs shadow-xs border border-slate-700"></div>
-        <div class="absolute -right-1 top-3.5 w-1.5 h-3.5 bg-slate-900 rounded-xs shadow-xs border border-slate-700"></div>
-        <div class="absolute -left-1 bottom-3.5 w-1.5 h-3.5 bg-slate-900 rounded-xs shadow-xs border border-slate-700"></div>
-        <div class="absolute -right-1 bottom-3.5 w-1.5 h-3.5 bg-slate-900 rounded-xs shadow-xs border border-slate-700"></div>
+          <!-- Side Passenger Windows Left -->
+          <rect x="4.5" y="24" width="2" height="7" rx="0.8" fill="#1e293b" />
+          <rect x="4.5" y="33" width="2" height="7" rx="0.8" fill="#1e293b" />
+          <rect x="4.5" y="42" width="2" height="7" rx="0.8" fill="#1e293b" />
+          <rect x="4.5" y="51" width="2" height="7" rx="0.8" fill="#1e293b" />
+
+          <!-- Side Passenger Windows Right -->
+          <rect x="37.5" y="24" width="2" height="7" rx="0.8" fill="#1e293b" />
+          <rect x="37.5" y="33" width="2" height="7" rx="0.8" fill="#1e293b" />
+          <rect x="37.5" y="42" width="2" height="7" rx="0.8" fill="#1e293b" />
+          <rect x="37.5" y="51" width="2" height="7" rx="0.8" fill="#1e293b" />
+
+          <!-- Rooftop White/Silver Panel -->
+          <rect x="10" y="24" width="24" height="36" rx="3" fill="#f8fafc" stroke="#cbd5e1" stroke-width="0.8" />
+          <!-- AC Unit on Roof -->
+          <rect x="13" y="28" width="18" height="10" rx="2" fill="#e2e8f0" stroke="#94a3b8" stroke-width="0.8" />
+          <!-- AC Grilles -->
+          <line x1="16" y1="31" x2="28" y2="31" stroke="#64748b" stroke-width="0.8" />
+          <line x1="16" y1="34" x2="28" y2="34" stroke="#64748b" stroke-width="0.8" />
+
+          <!-- "COLLEGE BUS" Roof Text -->
+          <text x="22" y="47" font-size="5" font-weight="900" font-family="system-ui, -apple-system, sans-serif" fill="#b45309" text-anchor="middle" letter-spacing="0.5">COLLEGE</text>
+          <text x="22" y="54" font-size="5" font-weight="900" font-family="system-ui, -apple-system, sans-serif" fill="#b45309" text-anchor="middle" letter-spacing="0.5">BUS</text>
+
+          <!-- Rear Bumper & Ruby LED Tail Lights -->
+          <rect x="7" y="65" width="30" height="3" rx="1.5" fill="#1e293b" />
+          <rect x="6" y="64" width="5" height="3" rx="1" fill="#ef4444" stroke="#fca5a5" stroke-width="0.6" />
+          <rect x="33" y="64" width="5" height="3" rx="1" fill="#ef4444" stroke="#fca5a5" stroke-width="0.6" />
+
+          <!-- Color Gradients -->
+          <defs>
+            <linearGradient id="bus_yellow_gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#fef08a" />
+              <stop offset="25%" stop-color="#f59e0b" />
+              <stop offset="85%" stop-color="#d97706" />
+              <stop offset="100%" stop-color="#b45309" />
+            </linearGradient>
+          </defs>
+        </svg>
       </div>
     </div>
   `;
 }
+
+const build3DBusHtml = buildSmallBusSvg;
 
 export interface RegionLandmark {
   id: string;
@@ -382,6 +392,8 @@ export const ProperMapView: React.FC<MapViewProps> = ({
   const landmarkMarkersRef = useRef<maplibregl.Marker[]>([]);
   const prevBusCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
   const busHeadingRef = useRef<number>(25);
+  const currentAnimCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
+  const animFrameRef = useRef<number | null>(null);
 
   // Place Search & Autocomplete
   const [searchQuery, setSearchQuery] = useState('');
@@ -389,6 +401,15 @@ export const ProperMapView: React.FC<MapViewProps> = ({
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const searchTimeoutRef = useRef<any>(null);
+
+  // Cleanup vehicle animation on unmount
+  useEffect(() => {
+    return () => {
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+      }
+    };
+  }, []);
 
   // 1. Initialize MapLibre GL
   useEffect(() => {
@@ -526,8 +547,13 @@ export const ProperMapView: React.FC<MapViewProps> = ({
     const map = mapRef.current;
     if (!map || !mapLoaded) return;
 
-    // A. Road Polyline Layer
-    const routeCoords = routeGeometry ? decodePolylineJs(routeGeometry) : [];
+    // A. Road Polyline Layer (Blue Path from Starting Stop to Ending Stop)
+    let routeCoords = routeGeometry ? decodePolylineJs(routeGeometry) : [];
+    if (routeCoords.length < 2 && stops.length >= 2) {
+      // Connect all stops sequentially from start to end if encoded polyline is not available
+      routeCoords = stops.map((s) => [s.longitude, s.latitude]);
+    }
+
     const routeGeoJson: any = {
       type: 'Feature',
       properties: {},
@@ -540,47 +566,53 @@ export const ProperMapView: React.FC<MapViewProps> = ({
     // Add or update road line
     if (map.getSource('route-line')) {
       (map.getSource('route-line') as maplibregl.GeoJSONSource).setData(routeGeoJson);
-    } else if (routeCoords.length > 0) {
+    } else {
       map.addSource('route-line', {
         type: 'geojson',
         data: routeGeoJson,
       });
+    }
 
-      // Casing outline for high contrast
+    // 1. Deep Navy Blue Casing / Outline for contrast against all map styles
+    if (!map.getLayer('route-line-casing') && routeCoords.length > 0) {
       map.addLayer({
         id: 'route-line-casing',
         type: 'line',
         source: 'route-line',
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
-          'line-color': '#1e1b4b',
-          'line-width': 8,
-          'line-opacity': 0.7,
+          'line-color': '#172554', // Deep Navy Blue
+          'line-width': 9,
+          'line-opacity': 0.85,
         },
       });
+    }
 
-      // Core indigo road line
+    // 2. Core Vibrant Royal Blue Road Line
+    if (!map.getLayer('route-line-core') && routeCoords.length > 0) {
       map.addLayer({
         id: 'route-line-core',
         type: 'line',
         source: 'route-line',
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
-          'line-color': '#4f46e5',
-          'line-width': 5,
-          'line-opacity': 0.95,
+          'line-color': '#2563eb', // Royal Blue (User Requested Blue Road Path)
+          'line-width': 6,
+          'line-opacity': 0.98,
         },
       });
+    }
 
-      // Animated high-tech corridor pulse line
+    // 3. Center Glowing Sky Blue Pulse Line
+    if (!map.getLayer('route-line-pulse') && routeCoords.length > 0) {
       map.addLayer({
         id: 'route-line-pulse',
         type: 'line',
         source: 'route-line',
         layout: { 'line-join': 'round', 'line-cap': 'round' },
         paint: {
-          'line-color': '#a5b4fc',
-          'line-width': 2,
+          'line-color': '#93c5fd', // Sky Blue Center Pulse
+          'line-width': 2.5,
           'line-dasharray': [2, 2],
           'line-opacity': 0.95,
         },
@@ -683,24 +715,40 @@ export const ProperMapView: React.FC<MapViewProps> = ({
       const isSelected = stop.id === (targetStopId || selectedStopId);
 
       const el = document.createElement('div');
-      el.className = 'group cursor-pointer flex flex-col items-center';
+      el.className = 'group cursor-pointer flex flex-col items-center select-none';
 
-      const circleColor = isSelected
-        ? 'bg-indigo-600 ring-4 ring-indigo-300'
-        : isOrigin
-        ? 'bg-emerald-500 ring-2 ring-white'
-        : isDestination
-        ? 'bg-rose-500 ring-2 ring-white'
-        : 'bg-indigo-500 ring-2 ring-white';
+      if (isOrigin) {
+        // Clear Starting Stop indicator on the blue path
+        el.innerHTML = `
+          <div class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-black px-2.5 py-1 rounded-full shadow-lg border-2 border-white uppercase tracking-wider transform transition-transform group-hover:scale-110">
+            <span class="w-2 h-2 rounded-full bg-white animate-ping"></span>
+            <span>START: ${stop.name}</span>
+          </div>
+          <div class="w-1.5 h-2 bg-emerald-700 rounded-b-full"></div>
+        `;
+      } else if (isDestination) {
+        // Clear Ending Stop indicator on the blue path
+        el.innerHTML = `
+          <div class="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-black px-2.5 py-1 rounded-full shadow-lg border-2 border-white uppercase tracking-wider transform transition-transform group-hover:scale-110">
+            <span>🏁</span>
+            <span>END: ${stop.name}</span>
+          </div>
+          <div class="w-1.5 h-2 bg-rose-700 rounded-b-full"></div>
+        `;
+      } else {
+        const circleColor = isSelected
+          ? 'bg-blue-600 ring-4 ring-blue-300'
+          : 'bg-indigo-600 ring-2 ring-white';
 
-      el.innerHTML = `
-        <div class="flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-bold shadow-md ${circleColor} transition-transform hover:scale-125">
-          ${index + 1}
-        </div>
-        <div class="mt-1 bg-white/95 text-slate-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-xs border border-slate-200 whitespace-nowrap max-w-[120px] truncate">
-          ${stop.name}
-        </div>
-      `;
+        el.innerHTML = `
+          <div class="flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-bold shadow-md ${circleColor} transition-transform group-hover:scale-125">
+            ${index + 1}
+          </div>
+          <div class="mt-1 bg-white/95 text-slate-800 text-[10px] font-bold px-1.5 py-0.5 rounded-md shadow-xs border border-slate-200 whitespace-nowrap max-w-[130px] truncate">
+            ${stop.name}
+          </div>
+        `;
+      }
 
       el.addEventListener('click', () => {
         if (onStopSelect) onStopSelect(stop);
@@ -714,54 +762,89 @@ export const ProperMapView: React.FC<MapViewProps> = ({
       bounds.extend([stop.longitude, stop.latitude]);
     });
 
-    // 5. Render Live 3D Bus Marker
+    // 5. Render Live Small Bus Image Marker with Smooth Road Travel Motion
     if (liveLocation && typeof liveLocation.latitude === 'number' && typeof liveLocation.longitude === 'number') {
       const isStale = liveLocation.is_stale;
       const speed = liveLocation.speed_kmh ?? 0;
-
-      // Calculate bearing from previous coordinates if moved
-      if (prevBusCoordsRef.current) {
-        const d = calculateHaversineDistance(
-          prevBusCoordsRef.current.lat,
-          prevBusCoordsRef.current.lng,
-          liveLocation.latitude,
-          liveLocation.longitude
-        );
-        if (d >= 2) {
-          busHeadingRef.current = calculateBearing(
-            prevBusCoordsRef.current.lat,
-            prevBusCoordsRef.current.lng,
-            liveLocation.latitude,
-            liveLocation.longitude
-          );
-        }
-      } else if (stops.length > 1) {
-        busHeadingRef.current = calculateBearing(
-          liveLocation.latitude,
-          liveLocation.longitude,
-          stops[1].latitude,
-          stops[1].longitude
-        );
-      }
-      prevBusCoordsRef.current = { lat: liveLocation.latitude, lng: liveLocation.longitude };
-
-      const htmlContent = build3DBusHtml(liveLocation.bus_number || '', speed, isStale, busHeadingRef.current);
+      const targetLat = liveLocation.latitude;
+      const targetLng = liveLocation.longitude;
 
       if (!busMarkerRef.current) {
+        // Initial placement
+        currentAnimCoordsRef.current = { lat: targetLat, lng: targetLng };
+        prevBusCoordsRef.current = { lat: targetLat, lng: targetLng };
+
+        let initialHeading = 25;
+        if (stops.length > 1) {
+          initialHeading = calculateBearing(targetLat, targetLng, stops[1].latitude, stops[1].longitude);
+        }
+        busHeadingRef.current = initialHeading;
+
         const el = document.createElement('div');
-        el.className = 'cursor-pointer z-30 transition-all';
-        el.innerHTML = htmlContent;
+        el.className = 'cursor-pointer z-30 transition-all select-none';
+        el.innerHTML = buildSmallBusSvg(liveLocation.bus_number || '', speed, isStale, busHeadingRef.current);
 
         busMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'center' })
-          .setLngLat([liveLocation.longitude, liveLocation.latitude])
+          .setLngLat([targetLng, targetLat])
           .addTo(map);
+
+        bounds.extend([targetLng, targetLat]);
       } else {
-        const el = busMarkerRef.current.getElement();
-        el.innerHTML = htmlContent;
-        busMarkerRef.current.setLngLat([liveLocation.longitude, liveLocation.latitude]);
+        // Bus marker already exists: smoothly glide along the road to the new coordinates
+        const fromLat = currentAnimCoordsRef.current?.lat ?? targetLat;
+        const fromLng = currentAnimCoordsRef.current?.lng ?? targetLng;
+
+        const moveDist = calculateHaversineDistance(fromLat, fromLng, targetLat, targetLng);
+
+        if (moveDist >= 0.5) {
+          // Calculate heading along the road path
+          busHeadingRef.current = calculateBearing(fromLat, fromLng, targetLat, targetLng);
+
+          if (animFrameRef.current) {
+            cancelAnimationFrame(animFrameRef.current);
+          }
+
+          const durationMs = 1200; // Smooth 1.2s glide along the road
+          const startTime = performance.now();
+
+          const animateStep = (now: number) => {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / durationMs, 1);
+            // Ease-out quad
+            const ease = 1 - (1 - progress) * (1 - progress);
+
+            const interpLng = fromLng + (targetLng - fromLng) * ease;
+            const interpLat = fromLat + (targetLat - fromLat) * ease;
+
+            currentAnimCoordsRef.current = { lat: interpLat, lng: interpLng };
+
+            if (busMarkerRef.current) {
+              busMarkerRef.current.setLngLat([interpLng, interpLat]);
+              const el = busMarkerRef.current.getElement();
+              el.innerHTML = buildSmallBusSvg(liveLocation.bus_number || '', speed, isStale, busHeadingRef.current);
+            }
+
+            if (progress < 1) {
+              animFrameRef.current = requestAnimationFrame(animateStep);
+            } else {
+              animFrameRef.current = null;
+            }
+          };
+
+          animFrameRef.current = requestAnimationFrame(animateStep);
+        } else {
+          // Stationary refresh
+          const el = busMarkerRef.current.getElement();
+          el.innerHTML = buildSmallBusSvg(liveLocation.bus_number || '', speed, isStale, busHeadingRef.current);
+        }
+
+        bounds.extend([targetLng, targetLat]);
       }
-      bounds.extend([liveLocation.longitude, liveLocation.latitude]);
     } else if (busMarkerRef.current) {
+      if (animFrameRef.current) {
+        cancelAnimationFrame(animFrameRef.current);
+        animFrameRef.current = null;
+      }
       busMarkerRef.current.remove();
       busMarkerRef.current = null;
     }

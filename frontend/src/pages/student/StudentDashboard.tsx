@@ -207,7 +207,7 @@ export const StudentDashboard: React.FC = () => {
                 )}
               </div>
               <div className="text-xs text-slate-500 mt-0.5">
-                {[user.department, user.year ? `${user.year} Year` : null].filter(Boolean).join(' • ') || 'Student'}
+                {[user.department, user.year ? `${user.year} Year` : null].filter(Boolean).join(' • ') || 'College User'}
               </div>
             </div>
           </div>
