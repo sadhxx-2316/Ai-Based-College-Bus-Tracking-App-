@@ -168,12 +168,15 @@ export const StudentDashboard: React.FC = () => {
       {/* 1. Top Header & Refresh */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
+            User Transit Module
+          </span>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5 mt-1">
             <Bus className="w-6 h-6 text-indigo-600" />
-            College Bus Fleet & Schedule
+            College Bus Fleet & Live 3D Tracking
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-            Search college buses below. Select any bus to view its live location and arrival ETA.
+            Search college buses below. Select any bus to track its real-time 3D location, road orientation, and smart arrival ETA.
           </p>
         </div>
 

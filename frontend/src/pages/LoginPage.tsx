@@ -277,7 +277,7 @@ export const LoginPage: React.FC = () => {
       });
 
       if (selectedRole === 'student') {
-        setStatusMessage({ type: 'success', text: 'Student account created successfully! Redirecting to student tracking dashboard...' });
+        setStatusMessage({ type: 'success', text: 'User account created successfully! Redirecting to user tracking dashboard...' });
         setTimeout(() => navigate('/student'), 1200);
       } else if (selectedRole === 'driver') {
         setStatusMessage({
@@ -327,7 +327,7 @@ export const LoginPage: React.FC = () => {
 
           {/* Role Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6 text-left">
-            {/* Student Card */}
+            {/* User / Student Card */}
             <div
               onClick={() => handleRoleSelect('student')}
               className="group bg-white p-6 rounded-2xl border-2 border-slate-200 hover:border-indigo-600 shadow-xs hover:shadow-xl transition-all cursor-pointer flex flex-col justify-between"
@@ -337,14 +337,14 @@ export const LoginPage: React.FC = () => {
                   <User className="w-6 h-6" />
                 </div>
                 <h3 className="text-lg font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                  College Student
+                  College User (Live Tracking)
                 </h3>
                 <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                  View scheduled bus routes, track buses in real-time with genuine GPS coordinates, and view AI-enabled arrival estimates.
+                  Live user transit module: view bus routes, track live 3D bus locations in real-time, and get smart distance-formula arrival estimates.
                 </p>
               </div>
               <div className="pt-6 flex items-center gap-1.5 text-xs font-bold text-indigo-600 group-hover:translate-x-1 transition-transform">
-                <span>Continue as Student</span>
+                <span>Continue to User Module</span>
                 <ArrowRight className="w-4 h-4" />
               </div>
             </div>
@@ -413,7 +413,7 @@ export const LoginPage: React.FC = () => {
   // STEP 2: SIGN IN & SIGN UP PORTAL (ROLE SELECTED)
   // ==========================================
   const roleLabel = {
-    student: 'Student Portal',
+    student: 'User Portal (Live Bus Tracking)',
     driver: 'Driver Portal',
     bus_manager: 'Transport Manager Portal',
     admin: 'System Administrator Console'

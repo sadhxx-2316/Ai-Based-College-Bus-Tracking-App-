@@ -50,7 +50,25 @@ export const AppContent: React.FC = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-          {/* Student Portal */}
+          {/* User Module (College Transit & Live 3D Bus Tracking) */}
+          <Route
+            path="/user"
+            element={
+              <ProtectedRoute allowedRoles={['student', 'bus_manager']}>
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/track/:busId"
+            element={
+              <ProtectedRoute allowedRoles={['student', 'bus_manager']}>
+                <StudentBusTrackingPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Student Legacy Route Aliases */}
           <Route
             path="/student"
             element={

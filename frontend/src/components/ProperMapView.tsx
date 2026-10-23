@@ -2,7 +2,19 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Stop, LiveLocation } from '../types';
-import { Search, MapPin, AlertTriangle, Compass, Navigation, Loader2, Layers, CheckCircle2 } from 'lucide-react';
+import {
+  Search,
+  MapPin,
+  AlertTriangle,
+  Compass,
+  Navigation,
+  Loader2,
+  Layers,
+  CheckCircle2,
+  Box,
+  Focus,
+  RefreshCw
+} from 'lucide-react';
 
 export interface MapViewProps {
   stops?: Stop[];
@@ -150,6 +162,107 @@ function calculateHaversineDistance(lat1: number, lon1: number, lat2: number, lo
   return R * c;
 }
 
+// Directional road bearing angle (degrees)
+function calculateBearing(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const toDeg = (r: number) => (r * 180) / Math.PI;
+  const dLon = toRad(lon2 - lon1);
+  const y = Math.sin(dLon) * Math.cos(toRad(lat2));
+  const x =
+    Math.cos(toRad(lat1)) * Math.sin(toRad(lat2)) -
+    Math.sin(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.cos(dLon);
+  const brng = toDeg(Math.atan2(y, x));
+  return (brng + 360) % 360;
+}
+
+// 3D Isometric Bus HTML generator with headlights, reflections, and HUD
+function build3DBusHtml(busNumber: string, speed: number, isStale: boolean, heading: number): string {
+  const speedLabel = speed > 0 ? `${speed.toFixed(1)} km/h` : 'Stationary';
+  const isMoving = speed > 2;
+
+  return `
+    <div class="relative flex flex-col items-center select-none group cursor-pointer" style="perspective: 1000px;">
+      <!-- Floating 3D Holographic HUD Badge -->
+      <div class="mb-2 px-3 py-1 bg-slate-900/95 text-white text-[11px] font-bold rounded-full shadow-2xl border border-indigo-400/50 backdrop-blur-md flex items-center gap-1.5 whitespace-nowrap transform -translate-y-1 group-hover:scale-105 transition-all">
+        <span class="w-2.5 h-2.5 rounded-full ${isStale ? 'bg-amber-400' : 'bg-emerald-400'} ${isMoving ? 'animate-ping' : ''} shrink-0"></span>
+        <span class="tracking-wide text-white font-extrabold">BUS ${busNumber}</span>
+        <span class="${isMoving ? 'bg-emerald-600' : 'bg-indigo-600'} text-white px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold shadow-xs">
+          ⚡ ${speedLabel}
+        </span>
+      </div>
+
+      <!-- 3D Rotatable Bus Vehicle (Oriented to Road Heading) -->
+      <div class="relative transition-transform duration-700 ease-out" style="transform: rotate(${heading}deg);">
+        <!-- Real-time Headlight Road Illumination Beam -->
+        <div class="absolute -top-14 left-1/2 -translate-x-1/2 w-16 h-18 pointer-events-none opacity-80"
+             style="background: radial-gradient(ellipse at bottom, rgba(254, 240, 138, 0.7) 0%, rgba(254, 240, 138, 0.1) 60%, rgba(254, 240, 138, 0) 80%); filter: blur(2px);">
+        </div>
+
+        <!-- 3D Ground Shadow beneath Chassis -->
+        <div class="absolute inset-0 bg-black/50 rounded-2xl blur-xs translate-y-2 scale-95 pointer-events-none"></div>
+
+        <!-- Realistic 3D College Bus Body Shell -->
+        <div class="relative w-12 h-22 bg-linear-to-b from-amber-400 via-amber-500 to-amber-600 rounded-xl shadow-2xl border-2 border-amber-300 flex flex-col justify-between overflow-hidden"
+             style="box-shadow: 0 12px 25px -4px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.7), inset 0 -4px 8px rgba(0, 0, 0, 0.35);">
+
+          <!-- Front Hood, Windshield & LED Headlights -->
+          <div class="relative w-full h-7 bg-linear-to-b from-slate-900 to-sky-950 rounded-t-lg border-b border-amber-600/60 flex flex-col justify-between p-1 overflow-hidden">
+            <!-- Windshield Glass Reflection Glare -->
+            <div class="absolute inset-0 bg-linear-to-tr from-transparent via-sky-300/35 to-white/50 pointer-events-none"></div>
+            <!-- Dual Projector LED Headlights -->
+            <div class="flex items-center justify-between px-0.5 z-10">
+              <div class="w-2.5 h-1.5 bg-yellow-100 rounded-xs shadow-[0_0_10px_#fde047] border border-white"></div>
+              <div class="w-4 h-1 bg-slate-800 rounded-xs flex items-center justify-center">
+                <span class="w-2 h-0.5 bg-amber-400 rounded-full"></span>
+              </div>
+              <div class="w-2.5 h-1.5 bg-yellow-100 rounded-xs shadow-[0_0_10px_#fde047] border border-white"></div>
+            </div>
+            <!-- Driver Cockpit Silhouette -->
+            <div class="flex items-center justify-center z-10 opacity-80">
+              <div class="w-3.5 h-2 bg-slate-800 rounded-t-xs"></div>
+            </div>
+          </div>
+
+          <!-- Mid Roof with Dual AC Compressor & Passenger Windows -->
+          <div class="relative flex-1 bg-amber-400 flex flex-col items-center justify-center py-1">
+            <!-- 3D Rooftop AC Unit -->
+            <div class="w-7 h-5 bg-linear-to-b from-slate-100 to-slate-300 rounded-xs shadow-md border border-slate-400 flex items-center justify-center">
+              <div class="w-5 h-3 bg-slate-400/50 rounded-2xs grid grid-cols-2 gap-0.5 p-0.5">
+                <div class="bg-slate-700/60 rounded-2xs"></div>
+                <div class="bg-slate-700/60 rounded-2xs"></div>
+              </div>
+            </div>
+            <!-- Side Windows (Left & Right) -->
+            <div class="absolute left-0 top-1 bottom-1 w-1 bg-slate-900/90 flex flex-col justify-around py-0.5">
+              <div class="h-1.5 bg-sky-200/50 rounded-r-2xs"></div>
+              <div class="h-1.5 bg-sky-200/50 rounded-r-2xs"></div>
+              <div class="h-1.5 bg-sky-200/50 rounded-r-2xs"></div>
+            </div>
+            <div class="absolute right-0 top-1 bottom-1 w-1 bg-slate-900/90 flex flex-col justify-around py-0.5">
+              <div class="h-1.5 bg-sky-200/50 rounded-l-2xs"></div>
+              <div class="h-1.5 bg-sky-200/50 rounded-l-2xs"></div>
+              <div class="h-1.5 bg-sky-200/50 rounded-l-2xs"></div>
+            </div>
+          </div>
+
+          <!-- Rear Bumper with Ruby-Red LED Tail Lights -->
+          <div class="relative w-full h-3.5 bg-linear-to-t from-slate-950 to-amber-700 flex items-center justify-between px-1 border-t border-amber-600/70">
+            <div class="w-2.5 h-1.5 bg-rose-600 rounded-xs shadow-[0_0_8px_#f43f5e] border border-rose-300"></div>
+            <div class="text-[7.5px] text-amber-200 font-extrabold tracking-tighter opacity-90">COLLEGE</div>
+            <div class="w-2.5 h-1.5 bg-rose-600 rounded-xs shadow-[0_0_8px_#f43f5e] border border-rose-300"></div>
+          </div>
+        </div>
+
+        <!-- 4 3D Rubber Wheels on Left and Right -->
+        <div class="absolute -left-1 top-3.5 w-1.5 h-3.5 bg-slate-900 rounded-xs shadow-xs border border-slate-700"></div>
+        <div class="absolute -right-1 top-3.5 w-1.5 h-3.5 bg-slate-900 rounded-xs shadow-xs border border-slate-700"></div>
+        <div class="absolute -left-1 bottom-3.5 w-1.5 h-3.5 bg-slate-900 rounded-xs shadow-xs border border-slate-700"></div>
+        <div class="absolute -right-1 bottom-3.5 w-1.5 h-3.5 bg-slate-900 rounded-xs shadow-xs border border-slate-700"></div>
+      </div>
+    </div>
+  `;
+}
+
 export interface RegionLandmark {
   id: string;
   name: string;
@@ -258,6 +371,8 @@ export const ProperMapView: React.FC<MapViewProps> = ({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [currentStyleKey, setCurrentStyleKey] = useState<string>('osm');
   const [showStyleMenu, setShowStyleMenu] = useState(false);
+  const [is3DMode, setIs3DMode] = useState<boolean>(true);
+  const [followBus, setFollowBus] = useState<boolean>(true);
 
   // Markers refs
   const stopMarkersRef = useRef<maplibregl.Marker[]>([]);
@@ -265,6 +380,8 @@ export const ProperMapView: React.FC<MapViewProps> = ({
   const approachMarkerRef = useRef<maplibregl.Marker | null>(null);
   const highlightMarkerRef = useRef<maplibregl.Marker | null>(null);
   const landmarkMarkersRef = useRef<maplibregl.Marker[]>([]);
+  const prevBusCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
+  const busHeadingRef = useRef<number>(25);
 
   // Place Search & Autocomplete
   const [searchQuery, setSearchQuery] = useState('');
@@ -288,9 +405,12 @@ export const ProperMapView: React.FC<MapViewProps> = ({
       container: mapContainerRef.current,
       style: STYLES[currentStyleKey].style,
       center: initialCenter,
-      zoom: stops.length > 0 || liveLocation ? 13 : 12,
+      zoom: stops.length > 0 || liveLocation ? 14 : 12,
+      pitch: is3DMode ? 55 : 0,
+      bearing: is3DMode ? 15 : 0,
       interactive,
       attributionControl: false,
+      maxPitch: 75,
     });
 
     map.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
@@ -308,6 +428,49 @@ export const ProperMapView: React.FC<MapViewProps> = ({
       setMapLoaded(false);
     };
   }, [interactive]);
+
+  // Toggle 3D Perspective
+  const toggle3DMode = () => {
+    if (!mapRef.current) return;
+    const nextMode = !is3DMode;
+    setIs3DMode(nextMode);
+    if (nextMode) {
+      const heading = busHeadingRef.current || 20;
+      mapRef.current.easeTo({ pitch: 58, bearing: heading, duration: 1000 });
+    } else {
+      mapRef.current.easeTo({ pitch: 0, bearing: 0, duration: 800 });
+    }
+  };
+
+  // Re-center on Bus or Route
+  const handleRecenter = () => {
+    if (!mapRef.current) return;
+    if (liveLocation && typeof liveLocation.latitude === 'number') {
+      mapRef.current.easeTo({
+        center: [liveLocation.longitude, liveLocation.latitude],
+        zoom: Math.max(mapRef.current.getZoom(), 15),
+        pitch: is3DMode ? 55 : 0,
+        bearing: is3DMode ? busHeadingRef.current : 0,
+        duration: 900,
+      });
+    } else if (stops.length > 0) {
+      const bounds = new maplibregl.LngLatBounds();
+      stops.forEach((s) => bounds.extend([s.longitude, s.latitude]));
+      mapRef.current.fitBounds(bounds, { padding: 60, pitch: is3DMode ? 50 : 0 });
+    }
+  };
+
+  // Smooth Camera Follow Bus
+  useEffect(() => {
+    if (followBus && liveLocation && mapRef.current && mapLoaded) {
+      mapRef.current.easeTo({
+        center: [liveLocation.longitude, liveLocation.latitude],
+        pitch: is3DMode ? 55 : 0,
+        bearing: is3DMode ? busHeadingRef.current : mapRef.current.getBearing(),
+        duration: 1000,
+      });
+    }
+  }, [liveLocation?.latitude, liveLocation?.longitude, followBus, is3DMode, mapLoaded]);
 
   // Handle style changes
   const handleChangeStyle = (key: string) => {
@@ -405,6 +568,20 @@ export const ProperMapView: React.FC<MapViewProps> = ({
         paint: {
           'line-color': '#4f46e5',
           'line-width': 5,
+          'line-opacity': 0.95,
+        },
+      });
+
+      // Animated high-tech corridor pulse line
+      map.addLayer({
+        id: 'route-line-pulse',
+        type: 'line',
+        source: 'route-line',
+        layout: { 'line-join': 'round', 'line-cap': 'round' },
+        paint: {
+          'line-color': '#a5b4fc',
+          'line-width': 2,
+          'line-dasharray': [2, 2],
           'line-opacity': 0.95,
         },
       });
@@ -537,33 +714,50 @@ export const ProperMapView: React.FC<MapViewProps> = ({
       bounds.extend([stop.longitude, stop.latitude]);
     });
 
-    // 5. Render Live Bus Marker
+    // 5. Render Live 3D Bus Marker
     if (liveLocation && typeof liveLocation.latitude === 'number' && typeof liveLocation.longitude === 'number') {
       const isStale = liveLocation.is_stale;
       const speed = liveLocation.speed_kmh ?? 0;
 
+      // Calculate bearing from previous coordinates if moved
+      if (prevBusCoordsRef.current) {
+        const d = calculateHaversineDistance(
+          prevBusCoordsRef.current.lat,
+          prevBusCoordsRef.current.lng,
+          liveLocation.latitude,
+          liveLocation.longitude
+        );
+        if (d >= 2) {
+          busHeadingRef.current = calculateBearing(
+            prevBusCoordsRef.current.lat,
+            prevBusCoordsRef.current.lng,
+            liveLocation.latitude,
+            liveLocation.longitude
+          );
+        }
+      } else if (stops.length > 1) {
+        busHeadingRef.current = calculateBearing(
+          liveLocation.latitude,
+          liveLocation.longitude,
+          stops[1].latitude,
+          stops[1].longitude
+        );
+      }
+      prevBusCoordsRef.current = { lat: liveLocation.latitude, lng: liveLocation.longitude };
+
+      const htmlContent = build3DBusHtml(liveLocation.bus_number || '', speed, isStale, busHeadingRef.current);
+
       if (!busMarkerRef.current) {
         const el = document.createElement('div');
-        el.className = 'relative flex flex-col items-center cursor-pointer';
-        el.innerHTML = `
-          <div class="relative flex items-center justify-center">
-            <span class="absolute w-12 h-12 rounded-full ${isStale ? 'bg-amber-400' : 'bg-emerald-500'} opacity-35 animate-ping"></span>
-            <div class="w-10 h-10 rounded-full ${isStale ? 'bg-amber-500' : 'bg-emerald-600'} text-white flex items-center justify-center shadow-xl border-2 border-white z-10">
-              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M4 16c0 1.1.9 2 2 2h1v1a1 1 0 0 0 2 0v-1h6v1a1 1 0 0 0 2 0v-1h1c1.1 0 2-.9 2-2V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V6h12v5z"/>
-              </svg>
-            </div>
-          </div>
-          <div class="mt-1 bg-slate-900/95 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-md flex items-center gap-1 border border-slate-700">
-            <span>BUS ${liveLocation.bus_number || ''}</span>
-            <span class="text-emerald-400 font-semibold">• ${speed.toFixed(1)} km/h</span>
-          </div>
-        `;
+        el.className = 'cursor-pointer z-30 transition-all';
+        el.innerHTML = htmlContent;
 
-        busMarkerRef.current = new maplibregl.Marker({ element: el })
+        busMarkerRef.current = new maplibregl.Marker({ element: el, anchor: 'center' })
           .setLngLat([liveLocation.longitude, liveLocation.latitude])
           .addTo(map);
       } else {
+        const el = busMarkerRef.current.getElement();
+        el.innerHTML = htmlContent;
         busMarkerRef.current.setLngLat([liveLocation.longitude, liveLocation.latitude]);
       }
       bounds.extend([liveLocation.longitude, liveLocation.latitude]);
@@ -803,34 +997,79 @@ export const ProperMapView: React.FC<MapViewProps> = ({
         </div>
       )}
 
-      {/* Map Style Selector Button */}
-      <div className="absolute top-3 right-14 z-20">
+      {/* Map Interactive Toolbar: 3D Toggle, Follow Bus, Recenter, Style Selector */}
+      <div className="absolute top-3 right-14 z-20 flex items-center gap-2">
+        {/* 3D Mode Toggle */}
         <button
           type="button"
-          onClick={() => setShowStyleMenu((prev) => !prev)}
-          className="p-2 bg-white/95 hover:bg-white text-slate-700 rounded-xl shadow-md border border-slate-200 backdrop-blur-xs transition-colors cursor-pointer"
-          title="Change Map Style"
+          onClick={toggle3DMode}
+          className={`px-3 py-2 rounded-xl shadow-md border text-xs font-extrabold flex items-center gap-1.5 backdrop-blur-xs transition-all cursor-pointer ${
+            is3DMode
+              ? 'bg-indigo-600 text-white border-indigo-500 shadow-indigo-600/30 ring-2 ring-indigo-300'
+              : 'bg-white/95 hover:bg-white text-slate-700 border-slate-200'
+          }`}
+          title={is3DMode ? 'Switch to 2D Top-Down View' : 'Switch to 3D Realistic Vehicle View'}
         >
-          <Layers className="w-4 h-4 text-indigo-600" />
+          <Box className="w-3.5 h-3.5" />
+          <span>{is3DMode ? '3D Active' : '2D Map'}</span>
         </button>
 
-        {showStyleMenu && (
-          <div className="absolute right-0 mt-1.5 w-48 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden py-1 z-30 text-xs">
-            {Object.entries(STYLES).map(([key, item]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => handleChangeStyle(key)}
-                className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-indigo-50 transition-colors ${
-                  currentStyleKey === key ? 'font-bold text-indigo-600 bg-indigo-50/50' : 'text-slate-700'
-                }`}
-              >
-                <span>{item.name}</span>
-                {currentStyleKey === key && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />}
-              </button>
-            ))}
-          </div>
+        {/* Follow 3D Bus Lock */}
+        {liveLocation && (
+          <button
+            type="button"
+            onClick={() => setFollowBus((f) => !f)}
+            className={`px-3 py-2 rounded-xl shadow-md border text-xs font-bold flex items-center gap-1.5 backdrop-blur-xs transition-all cursor-pointer ${
+              followBus
+                ? 'bg-emerald-600 text-white border-emerald-500 shadow-emerald-600/30'
+                : 'bg-white/95 hover:bg-white text-slate-700 border-slate-200'
+            }`}
+            title={followBus ? 'Camera locked to 3D Bus' : 'Click to lock camera to 3D Bus'}
+          >
+            <Navigation className={`w-3.5 h-3.5 ${followBus ? 'animate-pulse text-white' : 'text-slate-500'}`} />
+            <span className="hidden sm:inline">{followBus ? 'Chase Bus' : 'Free Cam'}</span>
+          </button>
         )}
+
+        {/* Recenter Camera */}
+        <button
+          type="button"
+          onClick={handleRecenter}
+          className="p-2 bg-white/95 hover:bg-white text-slate-700 rounded-xl shadow-md border border-slate-200 backdrop-blur-xs transition-colors cursor-pointer"
+          title="Recenter on Live Bus or Route"
+        >
+          <Focus className="w-4 h-4 text-indigo-600" />
+        </button>
+
+        {/* Map Style Selector Button */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowStyleMenu((prev) => !prev)}
+            className="p-2 bg-white/95 hover:bg-white text-slate-700 rounded-xl shadow-md border border-slate-200 backdrop-blur-xs transition-colors cursor-pointer"
+            title="Change Map Style"
+          >
+            <Layers className="w-4 h-4 text-indigo-600" />
+          </button>
+
+          {showStyleMenu && (
+            <div className="absolute right-0 mt-1.5 w-48 bg-white rounded-xl border border-slate-200 shadow-xl overflow-hidden py-1 z-30 text-xs">
+              {Object.entries(STYLES).map(([key, item]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => handleChangeStyle(key)}
+                  className={`w-full text-left px-3 py-2 flex items-center justify-between hover:bg-indigo-50 transition-colors ${
+                    currentStyleKey === key ? 'font-bold text-indigo-600 bg-indigo-50/50' : 'text-slate-700'
+                  }`}
+                >
+                  <span>{item.name}</span>
+                  {currentStyleKey === key && <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Actual Map Canvas */}

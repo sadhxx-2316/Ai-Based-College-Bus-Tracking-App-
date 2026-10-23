@@ -17,7 +17,7 @@ export const Navbar: React.FC = () => {
   };
 
   const roleLabel = {
-    student: 'Student',
+    student: 'User',
     driver: 'Bus Driver',
     bus_manager: 'Transport Manager',
     admin: 'Super Admin',

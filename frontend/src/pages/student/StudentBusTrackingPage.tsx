@@ -283,7 +283,7 @@ export const StudentBusTrackingPage: React.FC = () => {
           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 bg-white text-xs font-bold text-slate-700 hover:text-indigo-600 hover:border-indigo-300 transition-all shadow-2xs"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to All College Buses</span>
+          <span>Back to User Module</span>
         </button>
 
         <div className="flex items-center gap-3">
@@ -361,7 +361,7 @@ export const StudentBusTrackingPage: React.FC = () => {
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
             <span className="text-[11px] uppercase font-black tracking-wider text-indigo-300 bg-indigo-950/90 px-3 py-0.5 rounded-full border border-indigo-700/80">
-              CURRENTLY TRACKING
+              USER MODULE • 3D LIVE TRACKING
             </span>
             <span className="text-xs font-semibold text-slate-400">
               {bus.route_name || 'College Route Line'}
@@ -540,23 +540,26 @@ export const StudentBusTrackingPage: React.FC = () => {
           {/* Map Sub-Header with Legend */}
           <div className="flex flex-wrap items-center justify-between gap-3 px-1">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-bold text-slate-900">Live Approach Map</span>
+              <span className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Live 3D Vehicle Map
+              </span>
               <div className="flex items-center gap-3 text-[11px] text-slate-500 font-medium">
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3.5 h-1.5 bg-indigo-600 rounded-full" /> Road Route
+                  <span className="w-3.5 h-1.5 bg-indigo-600 rounded-full" /> Road Corridor
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-3.5 h-0.5 border-t-2 border-dashed border-amber-500" /> Straight Line Approach
+                  <span className="w-3.5 h-0.5 border-t-2 border-dashed border-amber-500" /> Approach Vector
                 </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Live Bus
+                <span className="flex items-center gap-1.5 font-bold text-amber-600">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 border border-amber-600" /> 3D Live Bus
                 </span>
               </div>
             </div>
 
             {bus.latest_location && (
               <span className="text-[11px] text-slate-500">
-                GPS update:{' '}
+                GPS telemetry:{' '}
                 <strong className="text-slate-700">
                   {new Date(bus.latest_location.recorded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </strong>
@@ -564,7 +567,7 @@ export const StudentBusTrackingPage: React.FC = () => {
             )}
           </div>
 
-          {/* Google Map Live Tracking */}
+          {/* Map with 3D Bus & Dynamic Controls */}
           <GoogleMapView
             stops={bus.stops}
             routeGeometry={bus.route_geometry}
@@ -573,7 +576,7 @@ export const StudentBusTrackingPage: React.FC = () => {
             targetStopId={selectedStop?.id}
             showStraightApproachLine={true}
             onStopSelect={(stop) => setSelectedStop(stop)}
-            className="h-[480px] w-full rounded-xl overflow-hidden border border-slate-200"
+            className="h-[520px] w-full rounded-2xl overflow-hidden border border-slate-200 shadow-md"
           />
 
           {/* Direct approach distance callout bar if live */}
